@@ -338,3 +338,9 @@
  */
 
 #cmakedefine01 USE_KDIALOG
+
+/*
+ * Do we want FLTK window to be able to embed into another native window?
+ */
+
+#cmakedefine01 USE_EMBED_WINDOW

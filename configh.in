@@ -338,3 +338,4 @@
  */
 
 #define USE_KDIALOG 1
+

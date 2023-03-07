@@ -857,6 +857,15 @@ endif (OPTION_USE_KDIALOG)
 #######################################################################
 
 #######################################################################
+option (OPTION_EMBED_WINDOW "enable embedding FLTK window to another native window" OFF)
+if (OPTION_EMBED_WINDOW)
+  set (USE_EMBED_WINDOW 1)
+else ()
+  set (USE_EMBED_WINDOW 0)
+endif (OPTION_EMBED_WINDOW)
+#######################################################################
+
+#######################################################################
 option (CMAKE_SUPPRESS_REGENERATION "suppress rules to re-run CMake on rebuild" OFF)
 mark_as_advanced (CMAKE_SUPPRESS_REGENERATION)
 
