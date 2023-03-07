@@ -888,3 +888,51 @@ bool Fl_Window::is_a_rescale() {return Fl_Window_Driver::is_a_rescale_;}
  \li other platforms: 0.
  */
 fl_uintptr_t Fl_Window::os_id() { return pWindowDriver->os_id();}
+
+#ifdef USE_EMBED_WINDOW
+/** Override native window ID with a user-specified one.
+ This is dedicated for constructing a Fl_Window containing window ID of a native window, since FLTK does not
+ have a standard API allowing users to embed Fl_Window into another native window.
+
+ Platform window driver's makeWindow() method will check if there's any parents specified in your window.
+ If true, your window will be created as a child window, which can be seamlessly integrated into the parent.
+ However by now FLTK does not support specifying a native window as a parent.
+
+ So, why not create a Fl_Window, and modify its XID to the native parent window's ID? That's it. Code is directly
+ adapted from Fl_X::set_xid().
+
+ See this example:
+ \code
+    // a. Create a dummy Fl_Window
+    Fl_Window parent_window = new Fl_Window(800, 480, "Parent window"); // You can assign any size and title
+    // b. Assign your native parent window ID with override_winid()
+    parent_window->override_winid(YOUR_NATIVE_WINDOW_HANDLE_ID);
+    // c. Set mouse cursor
+    parent_window->cursor(FL_CURSOR_DEFAULT);
+    // d. Set parent of your own FLTK window
+    your_fltk_window->parent(parent_window);
+    // e. Finally, show window
+    your_fltk_window->show();
+ \endcode
+
+ \note You must specify parent window before show(), because parent window is specified during window create.
+ \note Remember to set mouse cursor for parent window, otherwise the cursor will disappear when you move cursor
+ into the FLTK window!
+ \note This method is rather a hack!
+ Do NOT use this method if you are not intend to embed your window into another native window.
+ \see Fl_X* Fl_X::set_xid(Fl_Window*, Window)
+ */
+void Fl_Window::override_winid(unsigned long winxid_ptr) {
+  Fl_Window* win = this;
+
+  Fl_X *xp = new Fl_X;
+  xp->xid = winxid_ptr;
+  Fl_Window_Driver::driver(win)->other_xid = 0;
+  xp->w = win; win->flx_ = xp;
+  xp->next = Fl_X::first;
+  xp->region = 0;
+  Fl_Window_Driver::driver(win)->wait_for_expose_value = 1;
+  Fl_X::first = xp;
+  if (win->modal()) {Fl::modal_ = win;}
+}
+#endif

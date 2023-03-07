@@ -589,6 +589,11 @@ public:
   void screen_num(int screen_num);
   static bool is_a_rescale();
   fl_uintptr_t os_id();
+
+#ifdef USE_EMBED_WINDOW
+public:
+  void override_winid(unsigned long);
+#endif
 };
 
 #endif
