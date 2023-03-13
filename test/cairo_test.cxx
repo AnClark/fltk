@@ -42,7 +42,7 @@
 //    (configure --enable-cairoext or CMake OPTION_CAIROEXT)
 //    which defines the preprocessor variable FLTK_HAVE_CAIROEXT.
 //    If Fl::cairo_autolink_context(true); is called at the beginning
-//    of main(), any overriden draw() function gets access to an adequate
+//    of main(), any overridden draw() function gets access to an adequate
 //    Cairo context with Fl::cairo_cc() without having to call
 //    Fl::cairo_make_current(Fl_Window*).
 
@@ -151,7 +151,7 @@ void draw_image(cairo_t *cr, int w, int h) {
 
 typedef Fl_Cairo_Window cairo_using_window;
 
-#else // !USE_FL_CAIRO_WINDOW
+#else // !USE_FL_CAIRO_WINDOW || defined(FLTK_HAVE_CAIROEXT)
 
 class cairo_using_window : public Fl_Double_Window {
   void (*draw_with_cairo_)(cairo_using_window*, cairo_t*);
@@ -169,7 +169,15 @@ public:
     Fl::cairo_make_current(this); // announce Cairo will be used in this window
 #endif
     cairo_t *cc = Fl::cairo_cc(); // get the adequate Cairo context
-    draw_with_cairo_(this, cc); // draw in this window using Cairo
+    draw_with_cairo_(this, cc);   // draw in this window using Cairo
+
+    // flush Cairo drawings: necessary at least for Windows
+    // see also FL/Fl_Cairo_Window.H
+    // FIXME: this should be simplified with an FLTK API, for instance:
+    // Fl::cairo_flush(cc);
+
+    cairo_surface_t *s = cairo_get_target(cc);
+    cairo_surface_flush(s);
   }
   void set_draw_cb( void (*cb)(cairo_using_window*, cairo_t*)) {
     draw_with_cairo_ = cb;

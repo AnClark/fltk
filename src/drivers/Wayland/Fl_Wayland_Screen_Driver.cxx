@@ -597,6 +597,7 @@ int Fl_Wayland_Screen_Driver::compose(int& del) {
   int condition = (Fl::e_state & (FL_ALT | FL_META | FL_CTRL)) && ascii < 128 ; // letter+modifier key
   condition |= (Fl::e_keysym >= FL_Shift_L && Fl::e_keysym <= FL_Alt_R); // pressing modifier key
   condition |= (Fl::e_keysym >= FL_Home && Fl::e_keysym <= FL_Help);
+  condition |= Fl::e_keysym == FL_Tab;
 //fprintf(stderr, "compose: condition=%d e_state=%x ascii=%d\n", condition, Fl::e_state, ascii);
   if (condition) { del = 0; return 0;}
 //fprintf(stderr, "compose: del=%d compose_state=%d next_marked_length=%d \n", del, Fl::compose_state, next_marked_length);
@@ -609,7 +610,7 @@ int Fl_Wayland_Screen_Driver::compose(int& del) {
 
 void Fl_Wayland_Screen_Driver::compose_reset()
 {
-  if (!Fl_Wayland_Screen_Driver::wl_display) open_display();
+  if (!Fl_Wayland_Screen_Driver::wl_registry) open_display();
   Fl::compose_state = 0;
   next_marked_length = 0;
   xkb_compose_state_reset(seat->xkb_compose_state);
@@ -625,7 +626,6 @@ static dead_key_struct dead_keys[] = {
   {XKB_KEY_dead_acute, "´"},
   {XKB_KEY_dead_circumflex, "^"},
   {XKB_KEY_dead_tilde, "~"},
-  {XKB_KEY_dead_perispomeni, "~"}, // alias for dead_tilde
   {XKB_KEY_dead_macron, "¯"},
   {XKB_KEY_dead_breve, "˘"},
   {XKB_KEY_dead_abovedot, "˙"},
@@ -666,6 +666,8 @@ static void wl_keyboard_key(void *data, struct wl_keyboard *wl_keyboard,
   static char buf[128];
   uint32_t keycode = key + 8;
   xkb_keysym_t sym = xkb_state_key_get_one_sym(seat->xkb_state, keycode);
+  // replace ISO_Left_Tab (Shift-TAB) with FL_Tab
+  if (sym == 0xfe20) sym = FL_Tab;
   if (sym >= 'A' && sym <= 'Z') sym += 32; // replace uppercase by lowercase letter
 /*xkb_keysym_get_name(sym, buf, sizeof(buf));
 const char *action = (state == WL_KEYBOARD_KEY_STATE_PRESSED ? "press" : "release");
@@ -1171,7 +1173,7 @@ void Fl_Wayland_Screen_Driver::init_workarea()
 
 
 int Fl_Wayland_Screen_Driver::x() {
-  if (!Fl_Wayland_Screen_Driver::wl_display) open_display();
+  if (!Fl_Wayland_Screen_Driver::wl_registry) open_display();
   Fl_Wayland_Screen_Driver::output *output;
   wl_list_for_each(output, &outputs, link) {
     break;
@@ -1180,7 +1182,7 @@ int Fl_Wayland_Screen_Driver::x() {
 }
 
 int Fl_Wayland_Screen_Driver::y() {
-  if (!Fl_Wayland_Screen_Driver::wl_display) open_display();
+  if (!Fl_Wayland_Screen_Driver::wl_registry) open_display();
   Fl_Wayland_Screen_Driver::output *output;
   wl_list_for_each(output, &outputs, link) {
     break;
@@ -1189,7 +1191,7 @@ int Fl_Wayland_Screen_Driver::y() {
 }
 
 int Fl_Wayland_Screen_Driver::w() {
-  if (!Fl_Wayland_Screen_Driver::wl_display) open_display();
+  if (!Fl_Wayland_Screen_Driver::wl_registry) open_display();
   Fl_Wayland_Screen_Driver::output *output;
   wl_list_for_each(output, &outputs, link) {
     break;
@@ -1198,7 +1200,7 @@ int Fl_Wayland_Screen_Driver::w() {
 }
 
 int Fl_Wayland_Screen_Driver::h() {
-  if (!Fl_Wayland_Screen_Driver::wl_display) open_display();
+  if (!Fl_Wayland_Screen_Driver::wl_registry) open_display();
   Fl_Wayland_Screen_Driver::output *output;
   wl_list_for_each(output, &outputs, link) {
     break;
@@ -1208,7 +1210,7 @@ int Fl_Wayland_Screen_Driver::h() {
 
 
 void Fl_Wayland_Screen_Driver::init() {
-  if (!Fl_Wayland_Screen_Driver::wl_display) open_display();
+  if (!Fl_Wayland_Screen_Driver::wl_registry) open_display();
 }
 
 
